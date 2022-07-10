@@ -11,3 +11,11 @@ Datasets:
 Models:
 
 * `model1`: [Pointer Networks](https://arxiv.org/abs/1506.03134)
+
+### Unit Test
+
+* for loader
+
+```
+PYTHONPATH=. python loaders/loader1.py
+```
