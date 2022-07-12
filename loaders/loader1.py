@@ -13,7 +13,7 @@ class NumberSort(Dataset):
         assert num_min >= 1
         assert num_max >= num_min
 
-        self.srcs = [np.random.randint(val_min, val_max + 1, np.random.randint(num_min, num_max + 1, 1)) for _ in range(samples)]
+        self.srcs = [np.random.randint(val_min, val_max, np.random.randint(num_min, num_max + 1)) for _ in range(samples)]
         self.trgs = [np.argsort(src) for src in self.srcs]
 
     def __getitem__(self, index):
@@ -26,12 +26,12 @@ class NumberSort(Dataset):
         assert len(self.srcs) == len(self.trgs)
         return len(self.srcs)
 
-def collate_fn(batch_data):
+def collate_fn(batch_data, pad_idx):
     origin_srcs, origin_trgs = zip(*batch_data)
     sorted_srcs, sorted_trgs = zip(*sorted(zip(origin_srcs, origin_trgs), key = lambda x: len(x[0]), reverse = True))
 
-    padded_srcs = [src + [-1] * (len(sorted_srcs[0]) - len(src)) for src in sorted_srcs]
-    padded_trgs = [trg + [-1] * (len(sorted_trgs[0]) - len(trg)) for trg in sorted_trgs]
+    padded_srcs = [src + [pad_idx] * (len(sorted_srcs[0]) - len(src)) for src in sorted_srcs]
+    padded_trgs = [trg + [pad_idx] * (len(sorted_trgs[0]) - len(trg)) for trg in sorted_trgs]
     src_lengths = [len(src) for src in sorted_srcs]
 
     return (
@@ -45,9 +45,9 @@ def get_loader(option):
     valid_dataset = NumberSort(option.val_min, option.val_max, option.num_min, option.num_max, option.valid_samples)
     test_dataset  = NumberSort(option.val_min, option.val_max, option.num_min, option.num_max, option.test_samples )
 
-    train_dataloader = DataLoader(train_dataset, batch_size = option.batch_size, shuffle = True , collate_fn = collate_fn)
-    valid_dataloader = DataLoader(valid_dataset, batch_size = option.batch_size, shuffle = False, collate_fn = collate_fn)
-    test_dataloader  = DataLoader(test_dataset , batch_size = option.batch_size, shuffle = False, collate_fn = collate_fn)
+    train_dataloader = DataLoader(train_dataset, batch_size = option.batch_size, shuffle = True , collate_fn = lambda x: collate_fn(x, option.pad_idx))
+    valid_dataloader = DataLoader(valid_dataset, batch_size = option.batch_size, shuffle = False, collate_fn = lambda x: collate_fn(x, option.pad_idx))
+    test_dataloader  = DataLoader(test_dataset , batch_size = option.batch_size, shuffle = False, collate_fn = lambda x: collate_fn(x, option.pad_idx))
 
     return train_dataloader, valid_dataloader, test_dataloader
 

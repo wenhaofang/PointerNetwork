@@ -19,3 +19,9 @@ Models:
 ```
 PYTHONPATH=. python loaders/loader1.py
 ```
+
+* for module
+
+```
+PYTHONPATH=. python modules/module1.py
+```
