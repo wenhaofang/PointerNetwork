@@ -54,6 +54,8 @@ logger.info('prepare loader')
 
 train_loader, valid_loader, test_loader = get_loader1(option)
 
+pad_idx = option.num_max  # trg_pad_idx
+
 logger.info('prepare module')
 
 pointer_network = get_module1(option)
@@ -64,14 +66,14 @@ logger.info('prepare envs')
 
 optimizer = optim.Adam(pointer_network.parameters(), lr = option.lr, weight_decay = option.wd)
 
-criterion = nn.CrossEntropyLoss(ignore_index = option.num_max) # trg_pad_idx
+criterion = nn.CrossEntropyLoss(ignore_index = pad_idx)
 
 logger.info('start training!')
 
 best_valid_loss = float('inf')
 for epoch in range(option.num_epochs):
-    train_info = train(pointer_network, train_loader, criterion, optimizer, device)
-    valid_info = valid(pointer_network, valid_loader, criterion, optimizer, device)
+    train_info = train(pointer_network, train_loader, criterion, optimizer, device, pad_idx)
+    valid_info = valid(pointer_network, valid_loader, criterion, optimizer, device, pad_idx)
     logger.info(
         '[Epoch %d] Train Loss: %f, Train Acc: %f, Valid Loss: %f, Valid Acc: %f' %
         (epoch, train_info['loss'], train_info['acc'], valid_info['loss'], valid_info['acc'])
@@ -85,7 +87,7 @@ logger.info('start testing!')
 
 cur_epoch = load_checkpoint(save_path, pointer_network, optimizer)
 
-test_info = valid(pointer_network, test_loader, criterion, optimizer, device)
+test_info = valid(pointer_network, test_loader, criterion, optimizer, device, pad_idx)
 
 logger.info('Test Loss: %f, Test Acc: %f' % (test_info['loss'], test_info['acc']))
 

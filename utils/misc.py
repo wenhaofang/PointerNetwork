@@ -60,7 +60,7 @@ def masked_acc(output, target, mask):
     masked_target = torch.masked_select(target, mask)
     return masked_output.eq(masked_target).float().mean()
 
-def train(module, loader, criterion, optimizer, device):
+def train(module, loader, criterion, optimizer, device, max_seq_len):
     module.train()
     epoch_loss = 0.0
     all_outputs = []
@@ -78,9 +78,9 @@ def train(module, loader, criterion, optimizer, device):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        all_outputs.append(output)
-        all_targets.append(target)
-        all_maskeds.append(masked_tensor)
+        all_outputs.append(F.pad(output, (0, max_seq_len - output.shape[-1]), 'constant', max_seq_len))
+        all_targets.append(F.pad(target, (0, max_seq_len - target.shape[-1]), 'constant', max_seq_len))
+        all_maskeds.append(F.pad(masked_tensor, (0, max_seq_len - masked_tensor.shape[-1]), 'constant', False))
 
     all_outputs = torch.cat(all_outputs, dim = 0)
     all_targets = torch.cat(all_targets, dim = 0)
@@ -91,7 +91,7 @@ def train(module, loader, criterion, optimizer, device):
         'acc' : masked_acc(all_outputs, all_targets, all_maskeds),
     }
 
-def valid(module, loader, criterion, optimizer, device):
+def valid(module, loader, criterion, optimizer, device, max_seq_len):
     module.eval()
     epoch_loss = 0.0
     all_outputs = []
@@ -106,9 +106,9 @@ def valid(module, loader, criterion, optimizer, device):
             target.view(-1)
         )
         epoch_loss += loss.item()
-        all_outputs.append(output)
-        all_targets.append(target)
-        all_maskeds.append(masked_tensor)
+        all_outputs.append(F.pad(output, (0, max_seq_len - output.shape[-1]), 'constant', max_seq_len))
+        all_targets.append(F.pad(target, (0, max_seq_len - target.shape[-1]), 'constant', max_seq_len))
+        all_maskeds.append(F.pad(masked_tensor, (0, max_seq_len - masked_tensor.shape[-1]), 'constant', False))
 
     all_outputs = torch.cat(all_outputs, dim = 0)
     all_targets = torch.cat(all_targets, dim = 0)
