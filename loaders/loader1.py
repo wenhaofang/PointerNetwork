@@ -13,7 +13,7 @@ class NumberSort(Dataset):
         assert num_min >= 1
         assert num_max >= num_min
 
-        self.srcs = [np.random.randint(val_min, val_max, np.random.randint(num_min, num_max + 1)) for _ in range(samples)]
+        self.srcs = [np.random.randint(val_min, val_max + 1, np.random.randint(num_min, num_max + 1)) for _ in range(samples)]
         self.trgs = [np.argsort(src) for src in self.srcs]
 
     def __getitem__(self, index):
@@ -45,9 +45,9 @@ def get_loader(option):
     valid_dataset = NumberSort(option.val_min, option.val_max, option.num_min, option.num_max, option.valid_samples)
     test_dataset  = NumberSort(option.val_min, option.val_max, option.num_min, option.num_max, option.test_samples )
 
-    train_dataloader = DataLoader(train_dataset, batch_size = option.batch_size, shuffle = True , collate_fn = lambda x: collate_fn(x, option.pad_idx))
-    valid_dataloader = DataLoader(valid_dataset, batch_size = option.batch_size, shuffle = False, collate_fn = lambda x: collate_fn(x, option.pad_idx))
-    test_dataloader  = DataLoader(test_dataset , batch_size = option.batch_size, shuffle = False, collate_fn = lambda x: collate_fn(x, option.pad_idx))
+    train_dataloader = DataLoader(train_dataset, batch_size = option.batch_size, shuffle = True , collate_fn = lambda x: collate_fn(x, option.val_max + 1))
+    valid_dataloader = DataLoader(valid_dataset, batch_size = option.batch_size, shuffle = False, collate_fn = lambda x: collate_fn(x, option.val_max + 1))
+    test_dataloader  = DataLoader(test_dataset , batch_size = option.batch_size, shuffle = False, collate_fn = lambda x: collate_fn(x, option.val_max + 1))
 
     return train_dataloader, valid_dataloader, test_dataloader
 
@@ -61,7 +61,7 @@ if  __name__ == '__main__':
 
     for mini_batch in train_loader:
         src, trg, src_len = mini_batch
-        print(src.shape)
-        print(trg.shape)
-        print(src_len.shape)
+        print(src.shape)     # (batch_size, seq_len)
+        print(trg.shape)     # (batch_size, seq_len)
+        print(src_len.shape) # (batch_size)
         break

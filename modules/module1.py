@@ -32,19 +32,21 @@ class Attention(nn.Module):
         return log_score
 
 class PointerNetwork(nn.Module):
-    def __init__(self, val_max, pad_idx, emb_dim, hid_dim, num_layers, num_directions, dropout):
+    def __init__(self, val_max, emb_dim, hid_dim, num_layers, num_directions, dropout):
         super(PointerNetwork, self).__init__()
         self.emb_dim = emb_dim
         self.hid_dim = hid_dim
         self.num_layers = num_layers
         self.num_directions = num_directions
 
+        pad_idx = val_max + 1
+        emb_num = val_max + 2
         bidirectional = False if num_directions == 1 else \
                         True  if num_directions == 2 else \
                         False
 
         self.dropout   = nn.Dropout  (dropout)
-        self.embedding = nn.Embedding(val_max, emb_dim, padding_idx = pad_idx)
+        self.embedding = nn.Embedding(emb_num, emb_dim, padding_idx = pad_idx)
         self.encoder   = nn.LSTM     (emb_dim, hid_dim, batch_first = True, num_layers = num_layers, bidirectional = bidirectional)
         self.decoder   = nn.LSTMCell (hid_dim, hid_dim)
         self.attention = Attention   (hid_dim)
@@ -112,11 +114,11 @@ class PointerNetwork(nn.Module):
         pointer_scores = torch.stack(pointer_scores, 1)
         pointer_indexs = torch.stack(pointer_indexs, 1).squeeze(-1)
 
-        return pointer_scores, pointer_indexs
+        return pointer_scores, pointer_indexs, msk_tensors[:, 0]
 
 def get_module(option):
     return PointerNetwork(
-        option.val_max, option.pad_idx, option.emb_dim, option.hid_dim, option.num_layers, option.num_directions, option.dropout
+        option.val_max, option.emb_dim, option.hid_dim, option.num_layers, option.num_directions, option.dropout
     )
 
 if  __name__ == '__main__':
@@ -130,6 +132,7 @@ if  __name__ == '__main__':
     src = torch.randint(option.val_min, option.val_max, (option.batch_size, option.num_max)).long()
     src_len = torch.randint(option.num_min, option.num_max + 1, (option.batch_size,)).sort(dim = 0, descending = True)[0].long()
 
-    pointer_scores, pointer_indexs = module(src, src_len)
-    print(pointer_scores.shape) # (batch_size, val_max, val_max)
-    print(pointer_indexs.shape) # (batch_size, val_max)
+    pointer_scores, pointer_indexs, msk_tensors = module(src, src_len)
+    print(pointer_scores.shape) # (batch_size, src_len, src_len)
+    print(pointer_indexs.shape) # (batch_size, src_len)
+    print(msk_tensors.shape)    # (batch_size, src_len)
