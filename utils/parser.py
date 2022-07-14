@@ -12,18 +12,18 @@ def get_parser():
     parser.add_argument('--test_samples' , type = int, default = 1000, help = '')
 
     parser.add_argument('--val_min', type = int, default = 0, help = '')
-    parser.add_argument('--val_max', type = int, default = 1000, help = '')
-    parser.add_argument('--num_min', type = int, default = 1, help = '')
+    parser.add_argument('--val_max', type = int, default = 100, help = '')
+    parser.add_argument('--num_min', type = int, default = 5, help = '')
     parser.add_argument('--num_max', type = int, default = 10, help = '')
 
     # For Module
     parser.add_argument('--dropout', type = float, default = 0.5, help = '')
 
-    parser.add_argument('--emb_dim', type = int, default = 64, help = '')
-    parser.add_argument('--hid_dim', type = int, default = 64, help = '')
+    parser.add_argument('--emb_dim', type = int, default = 8, help = '')
+    parser.add_argument('--hid_dim', type = int, default = 8, help = '')
 
-    parser.add_argument('--num_layers', type = int, default = 2, help = '')
-    parser.add_argument('--num_directions', type = int, default = 2, help = '')
+    parser.add_argument('--num_layers', type = int, default = 1, help = '')     # 若为 2，会下降
+    parser.add_argument('--num_directions', type = int, default = 1, help = '') # 若为 2，会下降
 
     # For Train
     parser.add_argument('--batch_size', type = int, default = 256, help = '')

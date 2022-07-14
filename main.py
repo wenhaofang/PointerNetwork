@@ -64,7 +64,7 @@ logger.info('prepare envs')
 
 optimizer = optim.Adam(pointer_network.parameters(), lr = option.lr, weight_decay = option.wd)
 
-criterion = nn.CrossEntropyLoss(ignore_index = option.val_max + 1)
+criterion = nn.CrossEntropyLoss(ignore_index = option.num_max) # trg_pad_idx
 
 logger.info('start training!')
 
@@ -89,4 +89,4 @@ test_info = valid(pointer_network, test_loader, criterion, optimizer, device)
 
 logger.info('Test Loss: %f, Test Acc: %f' % (test_info['loss'], test_info['acc']))
 
-save_sample(result_folder, test_info['outputs'], test_info['targets'], valid_info['maskeds'])
+save_sample(result_folder, test_info['outputs'], test_info['targets'], test_info['maskeds'])

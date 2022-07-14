@@ -26,12 +26,12 @@ class NumberSort(Dataset):
         assert len(self.srcs) == len(self.trgs)
         return len(self.srcs)
 
-def collate_fn(batch_data, pad_idx):
+def collate_fn(batch_data, src_pad_idx, trg_pad_idx):
     origin_srcs, origin_trgs = zip(*batch_data)
     sorted_srcs, sorted_trgs = zip(*sorted(zip(origin_srcs, origin_trgs), key = lambda x: len(x[0]), reverse = True))
 
-    padded_srcs = [src + [pad_idx] * (len(sorted_srcs[0]) - len(src)) for src in sorted_srcs]
-    padded_trgs = [trg + [pad_idx] * (len(sorted_trgs[0]) - len(trg)) for trg in sorted_trgs]
+    padded_srcs = [src + [src_pad_idx] * (len(sorted_srcs[0]) - len(src)) for src in sorted_srcs]
+    padded_trgs = [trg + [trg_pad_idx] * (len(sorted_trgs[0]) - len(trg)) for trg in sorted_trgs]
     src_lengths = [len(src) for src in sorted_srcs]
 
     return (
@@ -45,9 +45,9 @@ def get_loader(option):
     valid_dataset = NumberSort(option.val_min, option.val_max, option.num_min, option.num_max, option.valid_samples)
     test_dataset  = NumberSort(option.val_min, option.val_max, option.num_min, option.num_max, option.test_samples )
 
-    train_dataloader = DataLoader(train_dataset, batch_size = option.batch_size, shuffle = True , collate_fn = lambda x: collate_fn(x, option.val_max + 1))
-    valid_dataloader = DataLoader(valid_dataset, batch_size = option.batch_size, shuffle = False, collate_fn = lambda x: collate_fn(x, option.val_max + 1))
-    test_dataloader  = DataLoader(test_dataset , batch_size = option.batch_size, shuffle = False, collate_fn = lambda x: collate_fn(x, option.val_max + 1))
+    train_dataloader = DataLoader(train_dataset, batch_size = option.batch_size, shuffle = True , collate_fn = lambda x: collate_fn(x, option.val_max + 1, option.num_max))
+    valid_dataloader = DataLoader(valid_dataset, batch_size = option.batch_size, shuffle = False, collate_fn = lambda x: collate_fn(x, option.val_max + 1, option.num_max))
+    test_dataloader  = DataLoader(test_dataset , batch_size = option.batch_size, shuffle = False, collate_fn = lambda x: collate_fn(x, option.val_max + 1, option.num_max))
 
     return train_dataloader, valid_dataloader, test_dataloader
 

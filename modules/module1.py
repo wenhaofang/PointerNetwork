@@ -39,7 +39,7 @@ class PointerNetwork(nn.Module):
         self.num_layers = num_layers
         self.num_directions = num_directions
 
-        pad_idx = val_max + 1
+        pad_idx = val_max + 1 # src_pad_idx
         emb_num = val_max + 2
         bidirectional = False if num_directions == 1 else \
                         True  if num_directions == 2 else \
@@ -62,7 +62,7 @@ class PointerNetwork(nn.Module):
         '''
         batch_size, seq_len = src.shape[0], src.shape[1]
 
-        embedded = self.dropout(self.embedding(src))
+        embedded = self.embedding(src) # 有 dropout，会下降
         embedded = pack_padded_sequence(embedded, src_len.to('cpu'), batch_first = True, enforce_sorted = False)
         outputs, hiddens = self.encoder(embedded)
         outputs, lengths = pad_packed_sequence(outputs, batch_first = True)
