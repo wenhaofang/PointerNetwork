@@ -68,12 +68,15 @@ optimizer = optim.Adam(pointer_network.parameters(), lr = option.lr, weight_deca
 
 criterion = nn.CrossEntropyLoss(ignore_index = pad_idx)
 
+is_coverage = option.is_coverage
+st_coverage = option.st_coverage
+
 logger.info('start training!')
 
 best_valid_loss = float('inf')
-for epoch in range(option.num_epochs):
-    train_info = train(pointer_network, train_loader, criterion, optimizer, device, pad_idx)
-    valid_info = valid(pointer_network, valid_loader, criterion, optimizer, device, pad_idx)
+for epoch in range(1, option.num_epochs + 1):
+    train_info = train(pointer_network, train_loader, criterion, optimizer, device, pad_idx, is_coverage and st_coverage <= epoch)
+    valid_info = valid(pointer_network, valid_loader, criterion, optimizer, device, pad_idx, is_coverage and st_coverage <= epoch)
     logger.info(
         '[Epoch %d] Train Loss: %f, Train Acc: %f, Valid Loss: %f, Valid Acc: %f' %
         (epoch, train_info['loss'], train_info['acc'], valid_info['loss'], valid_info['acc'])
@@ -87,7 +90,7 @@ logger.info('start testing!')
 
 cur_epoch = load_checkpoint(save_path, pointer_network, optimizer)
 
-test_info = valid(pointer_network, test_loader, criterion, optimizer, device, pad_idx)
+test_info = valid(pointer_network, test_loader, criterion, optimizer, device, pad_idx, is_coverage)
 
 logger.info('Test Loss: %f, Test Acc: %f' % (test_info['loss'], test_info['acc']))
 

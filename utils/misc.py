@@ -60,7 +60,7 @@ def masked_acc(output, target, mask):
     masked_target = torch.masked_select(target, mask)
     return masked_output.eq(masked_target).float().mean()
 
-def train(module, loader, criterion, optimizer, device, max_seq_len):
+def train(module, loader, criterion, optimizer, device, max_seq_len, is_coverage):
     module.train()
     epoch_loss = 0.0
     all_outputs = []
@@ -69,7 +69,7 @@ def train(module, loader, criterion, optimizer, device, max_seq_len):
     for mini_batch in tqdm.tqdm(loader):
         mini_batch = [each_i.to(device) for each_i in mini_batch]
         source, target, source_length = mini_batch
-        scores, output, masked_tensor = module(source, source_length)
+        scores, output, masked_tensor = module(source, source_length, is_coverage)
         loss = criterion(
             scores.view(-1, scores.shape[-1]),
             target.view(-1)
@@ -91,7 +91,7 @@ def train(module, loader, criterion, optimizer, device, max_seq_len):
         'acc' : masked_acc(all_outputs, all_targets, all_maskeds),
     }
 
-def valid(module, loader, criterion, optimizer, device, max_seq_len):
+def valid(module, loader, criterion, optimizer, device, max_seq_len, is_coverage):
     module.eval()
     epoch_loss = 0.0
     all_outputs = []
@@ -100,7 +100,7 @@ def valid(module, loader, criterion, optimizer, device, max_seq_len):
     for mini_batch in tqdm.tqdm(loader):
         mini_batch = [each_i.to(device) for each_i in mini_batch]
         source, target, source_length = mini_batch
-        scores, output, masked_tensor = module(source, source_length)
+        scores, output, masked_tensor = module(source, source_length, is_coverage)
         loss = criterion(
             scores.view(-1, scores.shape[-1]),
             target.view(-1)

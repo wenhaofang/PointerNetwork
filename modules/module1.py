@@ -51,7 +51,7 @@ class PointerNetwork(nn.Module):
         self.decoder   = nn.LSTMCell (hid_dim, hid_dim)
         self.attention = Attention   (hid_dim)
 
-    def forward(self, src, src_len):
+    def forward(self, src, src_len, is_coverage):
         '''
         Params:
             src    : Torch LongTensor (batch_size, seq_len)
@@ -99,10 +99,16 @@ class PointerNetwork(nn.Module):
 
         msk_tensors = row_tensors * col_tensors
 
+        if  is_coverage:
+            coverages = torch.ones((batch_size, seq_len), dtype = torch.bool, device = src.device)
+
         pointer_scores = []
         pointer_indexs = []
         for i in range(seq_len):
             sub_mask = msk_tensors[:, i, :]
+            if  is_coverage:
+                sub_mask &= coverages # deep copy?
+
             decoder_hiddens = self.decoder(decoder_inputs , decoder_hiddens)
             pointer_score = self.attention(encoder_outputs, decoder_hiddens[0], sub_mask)
             pointer_value , pointer_index = masked_max(pointer_score, sub_mask, dim = 1, keepdim = True)
@@ -110,11 +116,13 @@ class PointerNetwork(nn.Module):
             pointer_indexs.append(pointer_index)
             indices_tensor = pointer_index.unsqueeze(-1).repeat( 1, 1, self.hid_dim )
             decoder_inputs = torch.gather(encoder_outputs, dim = 1, index = indices_tensor).squeeze(1)
+            if  is_coverage:
+                coverages.scatter_(dim = 1, index = pointer_index, src = torch.zeros_like(pointer_index, dtype = coverages.dtype))
 
         pointer_scores = torch.stack(pointer_scores, 1)
         pointer_indexs = torch.stack(pointer_indexs, 1).squeeze(-1)
 
-        return pointer_scores, pointer_indexs, msk_tensors[:, 0]
+        return pointer_scores, pointer_indexs, msk_tensors[:, 0, :]
 
 def get_module(option):
     return PointerNetwork(
